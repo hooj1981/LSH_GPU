@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPU Contract Value Calculator</title>
+<style>
+  :root{
+    --bg: #0b1016;
+    --panel: #101822;
+    --panel-2: #0d1520;
+    --line: #1f2b38;
+    --text: #dce6ef;
+    --muted: #6f8496;
+    --accent: #ff8a3d;
+    --accent-dim: #5c3d24;
+    --good: #35d9a8;
+    --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+  }
+
+  body {
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: -1px -1px;
+    background-color: var(--bg);
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    flex: none;
+  }
+
+  .brand h1 {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+
+  header .tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 760px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px;
+  }
+
+  .panel h2 {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin: 0 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel h2::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .field {
+    margin-bottom: 22px;
+  }
+
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .field label .val {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 13px;
+  }
+
+  .field input[type="number"] {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 20px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color .15s ease;
+  }
+
+  .field input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .field input[type="number"]::-webkit-outer-spin-button,
+  .field input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .field-inline {
+    display: flex;
+    gap: 10px;
+  }
+
+  .field-inline input[type="number"] { flex: 1; }
+
+  .unit-toggle {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .unit-toggle button {
+    flex: 1;
+    background: var(--panel-2);
+    border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 6px;
+    cursor: pointer;
+    border-left: 1px solid var(--line);
+    transition: background .15s ease, color .15s ease;
+  }
+
+  .unit-toggle button:first-child { border-left: none; }
+
+  .unit-toggle button.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 0 4px var(--accent-dim);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 0 4px var(--accent-dim);
+  }
+
+  .breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 13px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 14px;
+  }
+
+  .row:last-of-type { border-bottom: none; }
+
+  .row .k { color: var(--muted); }
+  .row .v { font-family: var(--mono); color: var(--text); }
+
+  .total-block {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+  }
+
+  .total-block .label {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .total-block .figure {
+    font-family: var(--mono);
+    font-size: 44px;
+    font-weight: 600;
+    color: var(--good);
+    letter-spacing: -0.01em;
+    word-break: break-all;
+  }
+
+  .total-block .sub {
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  select {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    outline: none;
+  }
+
+  footer {
+    margin-top: 32px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <span class="dot"></span>
+      <h1>GPU Contract Value Calculator</h1>
+    </div>
+    <span class="tag">Compute Pricing Tool</span>
+  </header>
+
+  <main>
+
+    <div class="panel">
+      <h2>Inputs</h2>
+
+      <div class="field">
+        <label>GPU Quantity</label>
+        <input type="number" id="qtyInput" min="1" step="1" value="8">
+      </div>
+
+      <div class="field">
+        <label>Price per GPU / Hour (USD) <span class="val" id="priceVal">$5.00</span></label>
+        <input type="number" id="priceInput" min="0" step="0.01" value="5.00">
+      </div>
+
+      <div class="field">
+        <label>Term Length</label>
+        <div class="unit-toggle" id="termToggle">
+          <button data-term="12">12 mo</button>
+          <button data-term="24">24 mo</button>
+          <button data-term="36" class="active">36 mo</button>
+          <button data-term="48">48 mo</button>
+          <button data-term="60">60 mo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Contract Summary</h2>
+
+      <div class="breakdown">
+        <div class="row"><span class="k">GPU quantity</span><span class="v" id="outQty">8</span></div>
+        <div class="row"><span class="k">Rate per GPU/hr</span><span class="v" id="outRate">$2.50</span></div>
+        <div class="row"><span class="k">Term</span><span class="v" id="outTerm">12 months</span></div>
+        <div class="row"><span class="k">Total billable hours</span><span class="v" id="outHours">0</span></div>
+        <div class="row"><span class="k">Effective monthly value</span><span class="v" id="outMonthly">$0</span></div>
+      </div>
+
+      <div class="total-block">
+        <div class="label">Total Contract Value</div>
+        <div class="figure" id="outTotal">$0</div>
+        <div class="sub" id="outTotalSub">based on inputs above</div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>GPU QTY &times; RATE &times; TERM HOURS = TOTAL CONTRACT VALUE</footer>
+
+</div>
+
+<script>
+  const qtyInput = document.getElementById('qtyInput');
+  const priceInput = document.getElementById('priceInput');
+  const priceVal = document.getElementById('priceVal');
+  const termToggle = document.getElementById('termToggle');
+
+  const outQty = document.getElementById('outQty');
+  const outRate = document.getElementById('outRate');
+  const outTerm = document.getElementById('outTerm');
+  const outHours = document.getElementById('outHours');
+  const outMonthly = document.getElementById('outMonthly');
+  const outTotal = document.getElementById('outTotal');
+
+  let termMonths = 36;
+  const HOURS_PER_MONTH = 24 * 30; // 30-day month convention
+
+  const fmtUSD = (n) => {
+    if (!isFinite(n)) return '$0';
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const fmtInt = (n) => {
+    if (!isFinite(n)) return '0';
+    return Math.round(n).toLocaleString('en-US');
+  };
+
+  qtyInput.addEventListener('input', calc);
+  priceInput.addEventListener('input', calc);
+
+  termToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    termMonths = parseInt(btn.dataset.term, 10);
+    [...termToggle.children].forEach(b => b.classList.toggle('active', b === btn));
+    calc();
+  });
+
+  function calc() {
+    const qty = parseFloat(qtyInput.value) || 0;
+    const rate = parseFloat(priceInput.value) || 0;
+
+    priceVal.textContent = fmtUSD(rate);
+
+    const totalHours = termMonths * HOURS_PER_MONTH;
+    const monthlyValue = qty * rate * HOURS_PER_MONTH;
+    const totalValue = qty * rate * totalHours;
+
+    outQty.textContent = fmtInt(qty) + ' GPUs';
+    outRate.textContent = fmtUSD(rate) + ' /hr';
+    outTerm.textContent = termMonths + ' months';
+    outHours.textContent = fmtInt(totalHours) + ' hrs';
+    outMonthly.textContent = fmtUSD(monthlyValue);
+
+    outTotal.textContent = fmtUSD(totalValue);
+  }
+
+  calc();
+</script>
+
+</body>
+</html>
