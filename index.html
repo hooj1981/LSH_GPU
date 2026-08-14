@@ -359,6 +359,7 @@
         <div class="row"><span class="k">Term</span><span class="v" id="outTerm">12 months</span></div>
         <div class="row"><span class="k">Total billable hours</span><span class="v" id="outHours">0</span></div>
         <div class="row"><span class="k">Effective monthly value</span><span class="v" id="outMonthly">$0</span></div>
+        <div class="row"><span class="k">Annual Contract Value (ACV)</span><span class="v" id="outACV">$0</span></div>
       </div>
 
       <div class="total-block">
@@ -385,6 +386,7 @@
   const outTerm = document.getElementById('outTerm');
   const outHours = document.getElementById('outHours');
   const outMonthly = document.getElementById('outMonthly');
+  const outACV = document.getElementById('outACV');
   const outTotal = document.getElementById('outTotal');
 
   let termMonths = 36;
@@ -420,12 +422,14 @@
     const totalHours = termMonths * HOURS_PER_MONTH;
     const monthlyValue = qty * rate * HOURS_PER_MONTH;
     const totalValue = qty * rate * totalHours;
+    const acv = monthlyValue * 12;
 
     outQty.textContent = fmtInt(qty) + ' GPUs';
     outRate.textContent = fmtUSD(rate) + ' /hr';
     outTerm.textContent = termMonths + ' months';
     outHours.textContent = fmtInt(totalHours) + ' hrs';
     outMonthly.textContent = fmtUSD(monthlyValue);
+    outACV.textContent = fmtUSD(acv);
 
     outTotal.textContent = fmtUSD(totalValue);
   }
